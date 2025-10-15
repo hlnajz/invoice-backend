@@ -6,7 +6,7 @@ const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
-const aiRoutes = require("./routes/aiRoutes");
+// const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -32,7 +32,7 @@ app.options("*", cors());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoiceRoutes);
-app.use("/api/ai", aiRoutes);
+// app.use("/api/ai", aiRoutes);
 
 // Start Server – use numeric PORT only
 const PORT = process.env.PORT || 8000;
