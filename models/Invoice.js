@@ -5,7 +5,7 @@ const itemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   unitPrice: { type: Number, required: true },
   taxPercent: { type: Number, default: 0 },
-  total: { type: Number, required: true },
+  total: { type: Number, required: true }, // quantity * unitPrice + tax
 });
 
 const invoiceSchema = new mongoose.Schema(
@@ -51,9 +51,11 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["Paid", "Unpaid"],
       default: "Unpaid",
     },
-    subtotal: Number,
-    taxTotal: Number,
-    total: Number,
+    subtotal: { type: Number, required: true },
+    taxTotal: { type: Number, required: true },
+    discountPercent: { type: Number, default: 0 }, // store discount % globally
+    discountAmount: { type: Number, required: true }, // calculated amount
+    total: { type: Number, required: true }, // subtotal + taxTotal - discountAmount
   },
   { timestamps: true }
 );

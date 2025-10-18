@@ -15,18 +15,23 @@ exports.createInvoice = async (req, res) => {
       items,
       notes,
       paymentTerms,
+      
+      discountPercent // discount as percentage
     } = req.body;
-    
 
-    // subtotal calculation
+    // Calculate subtotal and tax
     let subtotal = 0;
     let taxTotal = 0;
     items.forEach((item) => {
-      subtotal += item.unitPrice * item.quantity;
-      taxTotal += ((item.unitPrice * item.quantity) * (item.taxPercent || 0)) / 100;
+      const itemTotal = (item.quantity || 0) * (item.unitPrice || 0);
+      subtotal += itemTotal;
+      taxTotal += itemTotal * ((item.taxPercent || 0) / 100);
+      item.total = itemTotal + itemTotal * ((item.taxPercent || 0) / 100); // store item total
     });
 
-    const total = subtotal + taxTotal;
+    const totalBeforeDiscount = subtotal + taxTotal;
+    const discountAmount = totalBeforeDiscount * ((discountPercent || 0) / 100);
+    const total = totalBeforeDiscount - discountAmount;
 
     const invoice = new Invoice({
       user,
@@ -36,6 +41,8 @@ exports.createInvoice = async (req, res) => {
       billFrom,
       billTo,
       items,
+      discountPercent: discountPercent || 0,
+      discountAmount,
       notes,
       paymentTerms,
       subtotal,
@@ -46,9 +53,7 @@ exports.createInvoice = async (req, res) => {
     await invoice.save();
     res.status(201).json(invoice);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating invoice", error: error.message });
+    res.status(500).json({ message: "Error creating invoice", error: error.message });
   }
 };
 
@@ -57,12 +62,10 @@ exports.createInvoice = async (req, res) => {
 // @access  Private
 exports.getInvoices = async (req, res) => {
   try {
-    const invoices = await Invoice.find({user: req.user.id}).populate("user", "name email");
+    const invoices = await Invoice.find({ user: req.user.id }).populate("user", "name email");
     res.json(invoices);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching invoice", error: error.message });
+    res.status(500).json({ message: "Error fetching invoices", error: error.message });
   }
 };
 
@@ -74,16 +77,13 @@ exports.getInvoiceById = async (req, res) => {
     const invoice = await Invoice.findById(req.params.id).populate("user", "name email");
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
-    // Check if the invoice belongs to the user
     if (invoice.user._id.toString() !== req.user.id) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
     res.json(invoice);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching invoice", error: error.message });
+    res.status(500).json({ message: "Error fetching invoice", error: error.message });
   }
 };
 
@@ -99,22 +99,26 @@ exports.updateInvoice = async (req, res) => {
       billFrom,
       billTo,
       items,
+      discountPercent,
       notes,
       paymentTerms,
       status,
     } = req.body;
 
-    // recalculate totals if items changed
     let subtotal = 0;
     let taxTotal = 0;
     if (items && items.length > 0) {
       items.forEach((item) => {
-        subtotal += item.unitPrice * item.quantity;
-        taxTotal += ((item.unitPrice * item.quantity) * (item.taxPercent || 0)) / 100;
+        const itemTotal = (item.quantity || 0) * (item.unitPrice || 0);
+        subtotal += itemTotal;
+        taxTotal += itemTotal * ((item.taxPercent || 0) / 100);
+        item.total = itemTotal + itemTotal * ((item.taxPercent || 0) / 100);
       });
     }
 
-    const total = subtotal + taxTotal;
+    const totalBeforeDiscount = subtotal + taxTotal;
+    const discountAmount = totalBeforeDiscount * ((discountPercent || 0) / 100);
+    const total = totalBeforeDiscount - discountAmount;
 
     const updatedInvoice = await Invoice.findByIdAndUpdate(
       req.params.id,
@@ -125,6 +129,8 @@ exports.updateInvoice = async (req, res) => {
         billFrom,
         billTo,
         items,
+        discountPercent: discountPercent || 0,
+        discountAmount,
         notes,
         paymentTerms,
         status,
@@ -139,9 +145,7 @@ exports.updateInvoice = async (req, res) => {
 
     res.json(updatedInvoice);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating invoice", error: error.message });
+    res.status(500).json({ message: "Error updating invoice", error: error.message });
   }
 };
 
@@ -154,8 +158,6 @@ exports.deleteInvoice = async (req, res) => {
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
     res.json({ message: "Invoice deleted successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error deleting invoice", error: error.message });
+    res.status(500).json({ message: "Error deleting invoice", error: error.message });
   }
 };
