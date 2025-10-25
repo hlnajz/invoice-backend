@@ -21,7 +21,7 @@ const parseInvoiceFromText = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
@@ -55,7 +55,7 @@ const generateReminderEmail = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
@@ -97,7 +97,7 @@ const getDashboardSummary = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
