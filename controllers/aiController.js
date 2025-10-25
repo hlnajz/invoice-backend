@@ -142,7 +142,7 @@ const getDashboardSummary = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-1.5-flash",
       contents: prompt,
     });
 
